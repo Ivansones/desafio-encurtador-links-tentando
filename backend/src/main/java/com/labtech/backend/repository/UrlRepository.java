@@ -1,4 +1,15 @@
 package com.labtech.backend.repository;
 
-public interface UrlRepository {
-}
+import com.labtech.backend.entity.Url;
+import com.labtech.backend.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface UrlRepository extends JpaRepository<Url,Long> {
+
+    List<Url> findAllByUserId( Long userId );
+    List<Url> findAllByUserEmail( String email );
+    List<Url> findByShortCode(String shortCode);}

@@ -1,0 +1,11 @@
+services:
+  dbservice:
+    image: mysql:latest
+    container_name: encurtadordb
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: encurtador
+    volumes:
+      - C:\Users\ivang\Desktop\encurtador_data:/var/lib/mysql
