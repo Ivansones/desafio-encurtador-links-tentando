@@ -1,6 +1,7 @@
 package com.labtech.backend.url.controller;
 
 import com.labtech.backend.dto.CreateUrlRequestDto;
+import com.labtech.backend.dto.UpdateUrlDto;
 import com.labtech.backend.dto.UrlDto;
 import com.labtech.backend.url.service.IUrlService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,9 +27,9 @@ public class UrlController {
     public ResponseEntity<String> createLink (@RequestBody @Valid CreateUrlRequestDto requestDto, HttpServletRequest request) {
         boolean isCreated = urlService.createLink(requestDto,request);
         if (isCreated){
-            return ResponseEntity.status(HttpStatus.CREATED).body("Created successfully");
+            return ResponseEntity.status(HttpStatus.CREATED).body("Criado corretamente");
         }else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Creating failed");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Criação falhou");
         }
     }
 
@@ -43,5 +44,20 @@ public class UrlController {
         String link = urlService.accessLink(shortCode);
 
         return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(link)).build();
+    }
+    @DeleteMapping (path = "/delete/{shortCode}")
+    public ResponseEntity<String> deleteUrl (@PathVariable String shortCode){
+        urlService.deleteUrl(shortCode);
+        return ResponseEntity.status(HttpStatus.OK).body("Url deletado corrematamente");
+    }
+
+    @PatchMapping (path = "/update/{shortCode}")
+    public  ResponseEntity<String> updateUrl (@PathVariable String shortCode, @RequestBody @Valid UpdateUrlDto updateUrlDto){
+        boolean isUpdate = urlService.updateUrl(shortCode, updateUrlDto);
+        if (isUpdate){
+            return ResponseEntity.status(HttpStatus.OK).body("Url foi mudado com sucesso");
+        }else {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Falhou ao mudar o url");
+        }
     }
 }

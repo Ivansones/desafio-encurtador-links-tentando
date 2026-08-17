@@ -16,7 +16,9 @@ public class PathsConfig {
                 "/auth/login/public",
                 "/csrf-token/public",
                 "/url/{shortCode}"
+
         );
+
     }
     @Bean(name = "userPaths")
     public List<String> userPaths (){

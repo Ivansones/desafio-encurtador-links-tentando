@@ -1,6 +1,7 @@
 package com.labtech.backend.url.service.impl;
 
 import com.labtech.backend.dto.CreateUrlRequestDto;
+import com.labtech.backend.dto.UpdateUrlDto;
 import com.labtech.backend.dto.UrlDto;
 import com.labtech.backend.entity.Url;
 import com.labtech.backend.entity.User;
@@ -40,7 +41,7 @@ public class UrlServiceImpl implements IUrlService {
     public boolean createLink(CreateUrlRequestDto createUrlRequestDto, HttpServletRequest request) {
         Url url = transformUrlDtoToEntity(createUrlRequestDto);
         String email = ApplicationUtility.getLoggedInUser();
-        User user = userRepository.findUserByEmail(email).orElseThrow(()-> new RuntimeException("User was not found with"+email));
+        User user = userRepository.findUserByEmail(email).orElseThrow(()-> new RuntimeException("Usuario não encontrado com"+email));
         url.setUser(user);
         url.setCreatorIp(request.getRemoteAddr());
         Url savedUrl = urlRepository.save(url);
@@ -60,7 +61,7 @@ public class UrlServiceImpl implements IUrlService {
     public String accessLink(String shortCode) {
         List<Url> urls = urlRepository.findByShortCode(shortCode);
         if (urls.isEmpty()){
-            throw new RuntimeException("Couldn't find the shortcode");
+            throw new RuntimeException("Não foi possivel encontrar esse nome");
         }
 
         Url url = urls.get(0);
@@ -72,6 +73,54 @@ public class UrlServiceImpl implements IUrlService {
 
         return url.getLink();
     }
+    @Transactional
+    @Override
+    public void deleteUrl(String shortCode) {
+        String email = ApplicationUtility.getLoggedInUser();
+        User loggedUser = userRepository.findUserByEmail(email).orElseThrow(()->new RuntimeException("Usuario não existe"));
+        List<Url> urls = urlRepository.findByShortCode(shortCode);
+        if (urls.isEmpty()) {
+            throw new RuntimeException("URL não existe");
+        }
+        Url url = urls.get(0);
+
+        if (!url.getUser().getId().equals(loggedUser.getId())){
+            throw new RuntimeException("Voce não tem acesso para deletar esse url");
+        } else {
+            urlRepository.deleteByShortCode(shortCode);
+        }
+
+    }
+
+    @Transactional
+    @Override
+    public boolean updateUrl(String shortCode, UpdateUrlDto updateUrlDto) {
+
+        String email = ApplicationUtility.getLoggedInUser();
+        User loggedUser = userRepository.findUserByEmail(email).orElseThrow(()->new RuntimeException("Usuario não existe"));
+        List<Url> urls = urlRepository.findByShortCode(shortCode);
+        if (urls.isEmpty()) {
+            throw new RuntimeException("URL não existe");
+        }
+        Url url = urls.get(0);
+        if (!url.getUser().getId().equals(loggedUser.getId())) {
+            throw  new RuntimeException("Não pode dar update nesse url");
+        }
+        String newShortCode = updateUrlDto.shortCode() != null
+                ? updateUrlDto.shortCode()
+                : url.getShortCode();
+
+        String newLink = updateUrlDto.link() != null
+                ? updateUrlDto.link()
+                : url.getLink();
+
+        int updateUrl = urlRepository.urlUpdate(
+                shortCode,
+                newShortCode,
+                newLink
+        );
+        return updateUrl > 0;
+    }
 
     private Url transformUrlDtoToEntity(CreateUrlRequestDto createUrlRequestDto){
         Url url = new Url();
@@ -79,13 +128,13 @@ public class UrlServiceImpl implements IUrlService {
             url.setShortCode((generateUniqueShortCode()));
         } else {
             if (!urlRepository.findByShortCode(createUrlRequestDto.shortCode()).isEmpty()) {
-                throw new RuntimeException("This shortcode is already in use");
+                throw new RuntimeException("Esse codigo ja esta sendo usado");
             }else {
                 url.setShortCode(createUrlRequestDto.shortCode());
             }
         }
         if (!isValidDomain(createUrlRequestDto.link())){
-            throw new RuntimeException("Invalid link");
+            throw new RuntimeException("Link invalido");
         }
         url.setLink(createUrlRequestDto.link());
         url.setAccessCount(0);
